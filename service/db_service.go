@@ -15,17 +15,6 @@ type PostgresDBHandler struct {
 	*sql.DB
 }
 
-//var Db PostgresDBHandler
-
-/*
-const (
-	host        = "localhost"
-	port        = "5432"
-	dbName      = "labora-proyect-1"
-	rolName     = "postgres"
-	rolPassword = "1234"
-)*/
-
 // GetCredentials it is a function that returns the credentials from the fiel .env to connect to the database.
 func GetCredentials() (string, string, string, string, string) {
 	err := godotenv.Load(".env")

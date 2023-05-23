@@ -2,9 +2,8 @@ package main
 
 import (
 	"log"
-	"my_api_project/config"
-	"my_api_project/controller"
-	"my_api_project/service"
+	"my-labora-wallet-project/config"
+	"my-labora-wallet-project/service"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -12,23 +11,13 @@ import (
 
 func main() {
 
-	var dbHandler, error = service.Connect_DB()
+	var _, error = service.Connect_DB()
 	if error != nil {
 		log.Fatal(error)
 	}
-	itemService := &service.ItemService{DbHandler: dbHandler}
-	controller := &controller.ItemController{ItemService: *itemService}
 	router := mux.NewRouter()
 
-	router.HandleFunc("/items", controller.GetAllItems).Methods("GET")
-	router.HandleFunc("/items/page", controller.GetItemsPaginated).Methods("GET")
-	//router.HandleFunc("/items/details/{id}", controller.ItemDetails).Methods("GET")
-	router.HandleFunc("/items/id/{id}", controller.GetItemById).Methods("GET")
-	router.HandleFunc("/items/name/{name}", controller.GetItemByName).Methods("GET")
-
-	router.HandleFunc("/items", controller.CreateItem).Methods("POST")
-	router.HandleFunc("/items/{id}", controller.UpdateItem).Methods("PUT")
-	router.HandleFunc("/items/{id}", controller.DeleteItem).Methods("DELETE")
+	//router.HandleFunc("/CreateWallet", ).Methods("GET")
 
 	// Configure CORS middleware
 	corsOptions := handlers.CORS(
