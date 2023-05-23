@@ -1,24 +1,10 @@
-CREATE DATABASE labora-proyect-1;
+CREATE DATABASE labora-project-2;
 
-CREATE TABLE public.items
+CREATE TABLE public.wallet
 (
     id serial NOT NULL,
-    customer_name VARCHAR(255) NOT NULL,
-    order_date date NOT NULL,
-    product VARCHAR(255) NOT NULL,
-    quantity INTEGER NOT NULL CHECK(quantity > 0), 
-    price NUMERIC NOT NULL CHECK(price >= 0)
+    dni_request INTEGER NOT NULL, 
+    country_id VARCHAR(255) NOT NULL,
+    order_request date NOT NULL,
     PRIMARY KEY (id)
 );
-
-ALTER TABLE IF EXISTS public.items
-    OWNER to postgres;
-
-ALTER TABLE IF EXISTS public.items
-    ADD COLUMN details VARCHAR(255);
-
-ALTER TABLE IF EXISTS public.items
-		ADD COLUMN total_price INTEGER;
-		
-ALTER TABLE IF EXISTS public.items
-		ADD COLUMN view_count INTEGER;
