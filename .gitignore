@@ -1,0 +1,2 @@
+#Ignore credential configuration files
+.env
