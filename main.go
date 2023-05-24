@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"my-labora-wallet-project/config"
+	"my-labora-wallet-project/controller"
 	"my-labora-wallet-project/service"
 
 	"github.com/gorilla/handlers"
@@ -11,13 +12,19 @@ import (
 
 func main() {
 
-	var _, error = service.Connect_DB()
+	var dbHandler, error = service.Connect_DB()
 	if error != nil {
 		log.Fatal(error)
 	}
+	walletService := &service.WalletService{DbHandler: dbHandler}
+	controller := &controller.WalletController{WalletService: *walletService}
+
 	router := mux.NewRouter()
 
-	//router.HandleFunc("/CreateWallet", ).Methods("GET")
+	router.HandleFunc("/CreateWallet", controller.CreateWallet).Methods("POST")
+	router.HandleFunc("/UpdateWallet", controller.UpdateWallet).Methods("PUT")
+	router.HandleFunc("/DeleteWallet", controller.DeleteWallet).Methods("DELETE")
+	router.HandleFunc("/WalletStatus", controller.WalletStatus).Methods("GET")
 
 	// Configure CORS middleware
 	corsOptions := handlers.CORS(
