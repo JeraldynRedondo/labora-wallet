@@ -44,5 +44,12 @@ func Connect_DB() (*PostgresDBHandler, error) {
 	}
 	fmt.Println("Successful connection to the database:", dbConn)
 	DbHandler := &PostgresDBHandler{dbConn}
+	var result int
+	err = dbConn.QueryRow("SELECT 1").Scan(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("La solicitud a la base de datos está activa")
 	return DbHandler, nil
 }
