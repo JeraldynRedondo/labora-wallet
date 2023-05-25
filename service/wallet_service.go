@@ -25,3 +25,13 @@ func (s *WalletService) DeleteWallet(id int) error {
 func (s *WalletService) WalletStatus(pages, walletsPerPage int) ([]model.Wallet, int, error) {
 	return s.DbHandler.WalletStatus(pages, walletsPerPage)
 }
+
+// CreateLog implements the function CreateLog of the database in a DBHandler.
+func (s *WalletService) CreateLog(log model.Log) error {
+	return s.DbHandler.CreateLog(log)
+}
+
+// GetLogs implements the function GetLogs of the database in a DBHandler.
+func (s *WalletService) GetLogs(pages, logsPerPage int) ([]model.Log, int, error) {
+	return s.DbHandler.GetLogs(pages, logsPerPage)
+}

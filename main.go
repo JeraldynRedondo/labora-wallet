@@ -25,6 +25,7 @@ func main() {
 	router.HandleFunc("/UpdateWallet", controller.UpdateWallet).Methods("PUT")
 	router.HandleFunc("/DeleteWallet", controller.DeleteWallet).Methods("DELETE")
 	router.HandleFunc("/WalletStatus", controller.WalletStatus).Methods("GET")
+	router.HandleFunc("/GetLogs", controller.GetLogs).Methods("GET")
 
 	// Configure CORS middleware
 	corsOptions := handlers.CORS(

@@ -50,6 +50,6 @@ func Connect_DB() (*PostgresDBHandler, error) {
 		log.Fatal(err)
 	}
 
-	fmt.Println("La solicitud a la base de datos está activa")
+	fmt.Println("The request to the database is active")
 	return DbHandler, nil
 }

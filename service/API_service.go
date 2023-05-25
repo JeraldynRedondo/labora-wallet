@@ -57,10 +57,11 @@ func request(method, url string, payload *strings.Reader) ([]byte, error) {
 }
 
 // postTruoraAPIRequest is a function that makes a POST request to Truora "Background Check" API and returns the person's checkID.
-func postTruoraAPIRequest() (string, error) {
+func postTruoraAPIRequest(nationalID, country, typ string, userAuthorized bool) (string, error) {
 	url := "https://api.checks.truora.com/v1/checks"
 	method := "POST"
-	payload := strings.NewReader("national_id=74909799&country=PE&type=person&user_authorized=true")
+
+	payload := strings.NewReader(fmt.Sprintf("national_id=%s&country=%s&type=%s&user_authorized=%t", nationalID, country, typ, userAuthorized))
 
 	body, err := request(method, url, payload)
 	if err != nil {
@@ -82,8 +83,8 @@ func postTruoraAPIRequest() (string, error) {
 }
 
 // getTruoraAPIRequest is a function that makes a GET request to Truora "Background Check" API and returns the person's score.
-func getTruoraAPIRequest() (int, error) {
-	checkID, err := postTruoraAPIRequest()
+func getTruoraAPIRequest(national_id, country, typ string, userAuthorized bool) (int, error) {
+	checkID, err := postTruoraAPIRequest(national_id, country, typ, userAuthorized)
 	if err != nil {
 		return -1, fmt.Errorf("Post request failed: %w", err)
 	}
@@ -112,8 +113,8 @@ func getTruoraAPIRequest() (int, error) {
 	return score, nil
 }
 
-func GetApproval() (bool, error) {
-	score, err := getTruoraAPIRequest()
+func GetApproval(national_id, country, typ string, userAuthorized bool) (bool, error) {
+	score, err := getTruoraAPIRequest(national_id, country, typ, userAuthorized)
 
 	if score == 1 {
 		if err != nil {
