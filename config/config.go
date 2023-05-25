@@ -2,12 +2,22 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // StartServer it is a function that turns on the server
-func StartServer(port string, router http.Handler) error {
+func StartServer(router http.Handler) error {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	port := os.Getenv("portNumber")
+
 	servidor := &http.Server{
 		Handler:      router,
 		Addr:         port,

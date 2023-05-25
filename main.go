@@ -35,8 +35,7 @@ func main() {
 	// Add CORS middleware to all routes
 	handler := corsOptions(router)
 
-	portNumber := ":9999"
-	if err := config.StartServer(portNumber, handler); err != nil {
+	if err := config.StartServer(handler); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }
