@@ -22,12 +22,14 @@ func ResponseJson(response http.ResponseWriter, status int, data interface{}) er
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
+
 		return fmt.Errorf("error while marshalling object %v, trace: %+v", data, err)
 	}
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(status)
 	_, err = response.Write(bytes)
 	if err != nil {
+
 		return fmt.Errorf("error while writing bytes to response writer: %+v", err)
 	}
 
@@ -38,43 +40,22 @@ func ResponseJson(response http.ResponseWriter, status int, data interface{}) er
 func (c *WalletController) CreateWallet(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	var Body_request model.API_Request
-	var wallet model.Wallet
-	var log model.Log
 
 	err := json.NewDecoder(request.Body).Decode(&Body_request)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	wallet.DNI = Body_request.National_id
-	wallet.Country = Body_request.Country
-	wallet.Order_request = time.Now()
-	autorization, err := service.GetApproval(Body_request.National_id, Body_request.Country, Body_request.Typ, Body_request.UserAuthorized)
-
-	if !autorization {
-		log.DNI = wallet.DNI
-		log.Status_request = "Denied"
-		log.Order_request = time.Now()
-		c.WalletService.CreateLog(log)
-		ResponseJson(response, http.StatusConflict, nil)
 
 		return
 	}
 
-	wallet, err = c.WalletService.CreateWallet(wallet)
+	status, wallet, err := c.decisionToCreateWallet(Body_request)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
-	log.DNI = wallet.DNI
-	log.Status_request = "Approved"
-	log.Order_request = time.Now()
-	c.WalletService.CreateLog(log)
-
-	ResponseJson(response, http.StatusOK, wallet)
+	ResponseJson(response, status, wallet)
 }
 
 // UpdateWallet is a function that updates an Wallet by id from a request.
@@ -88,6 +69,7 @@ func (c *WalletController) UpdateWallet(response http.ResponseWriter, request *h
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		response.Write([]byte("ID must be a number"))
+
 		return
 	}
 
@@ -95,12 +77,14 @@ func (c *WalletController) UpdateWallet(response http.ResponseWriter, request *h
 	defer request.Body.Close()
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	wallet, err = c.WalletService.UpdateWallet(id, wallet)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -109,22 +93,25 @@ func (c *WalletController) UpdateWallet(response http.ResponseWriter, request *h
 
 // DeleteWallet is a function that delete an Wallet by id from a request.
 func (c *WalletController) DeleteWallet(response http.ResponseWriter, request *http.Request) {
+	var log model.Log
 	parameters := mux.Vars(request)
 	id, err := strconv.Atoi(parameters["id"])
+
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		response.Write([]byte("ID must be a number"))
+
 		return
 	}
 
-	err = c.WalletService.DeleteWallet(id)
+	err = c.WalletService.DeleteWallet(id, log)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	ResponseJson(response, http.StatusOK, model.Wallet{})
-
 }
 
 // WalletStatus is a function that returns a number of wallets per page from a request.
@@ -146,6 +133,7 @@ func (c *WalletController) WalletStatus(w http.ResponseWriter, r *http.Request) 
 	wallets, count, err := c.WalletService.WalletStatus(page, walletsPerPage)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -167,6 +155,7 @@ func (c *WalletController) WalletStatus(w http.ResponseWriter, r *http.Request) 
 	jsonData, err := json.Marshal(responseData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(jsonData)
@@ -191,6 +180,7 @@ func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
 	wallets, count, err := c.WalletService.GetLogs(page, walletsPerPage)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -212,7 +202,51 @@ func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
 	jsonData, err := json.Marshal(responseData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 	w.Write(jsonData)
+}
+
+// decisionToCreateWallet is a function that decides whether or not to create the wallet based on the API response.
+func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request) (int, model.Wallet, error) {
+	var wallet model.Wallet
+	var log model.Log
+
+	autorization, err := service.GetApproval(Body_request.National_id, Body_request.Country, Body_request.Entity_type, Body_request.UserAuthorized)
+	if err != nil {
+
+		return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("API request failed %w", err)
+	}
+
+	wallet.DNI = Body_request.National_id
+	wallet.Country = Body_request.Country
+	wallet.Date_request = time.Now()
+
+	if !autorization {
+		log.DNI = wallet.DNI
+		log.Country = wallet.Country
+		log.Status_request = "Denied"
+		log.Request_type = "CREATE WALLET"
+		err = c.WalletService.CreateLog(log)
+		if err != nil {
+
+			return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the log: %w", err)
+		}
+
+		return http.StatusConflict, model.Wallet{}, nil
+	}
+
+	log.DNI = wallet.DNI
+	log.Country = wallet.Country
+	log.Status_request = "Approved"
+	log.Request_type = "CREATE WALLET"
+
+	wallet, err = c.WalletService.CreateWallet(wallet, log)
+	if err != nil {
+
+		return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the wallet %w", err)
+	}
+
+	return http.StatusOK, wallet, nil
 }

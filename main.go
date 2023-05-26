@@ -22,8 +22,8 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/CreateWallet", controller.CreateWallet).Methods("POST")
-	router.HandleFunc("/UpdateWallet", controller.UpdateWallet).Methods("PUT")
-	router.HandleFunc("/DeleteWallet", controller.DeleteWallet).Methods("DELETE")
+	router.HandleFunc("/UpdateWallet/{id}", controller.UpdateWallet).Methods("PUT")
+	router.HandleFunc("/DeleteWallet/{id}", controller.DeleteWallet).Methods("DELETE")
 	router.HandleFunc("/WalletStatus", controller.WalletStatus).Methods("GET")
 	router.HandleFunc("/GetLogs", controller.GetLogs).Methods("GET")
 

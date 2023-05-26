@@ -22,11 +22,11 @@ func getCredentials() (string, string, string, string, string) {
 		log.Fatal("Error cargando el archivo .env")
 	}
 
-	host := os.Getenv("host")
-	port := os.Getenv("port")
-	dbName := os.Getenv("dbName")
-	rolName := os.Getenv("rolName")
-	rolPassword := os.Getenv("rolPassword")
+	host := os.Getenv("HOST")
+	port := os.Getenv("PORT")
+	dbName := os.Getenv("DB_NAME")
+	rolName := os.Getenv("ROL_NAME")
+	rolPassword := os.Getenv("ROL_PASSWORD")
 
 	return host, port, dbName, rolName, rolPassword
 }
@@ -40,6 +40,7 @@ func Connect_DB() (*PostgresDBHandler, error) {
 	dbConn, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal(err)
+
 		return nil, err
 	}
 	fmt.Println("Successful connection to the database:", dbConn)
@@ -51,5 +52,6 @@ func Connect_DB() (*PostgresDBHandler, error) {
 	}
 
 	fmt.Println("The request to the database is active")
+
 	return DbHandler, nil
 }

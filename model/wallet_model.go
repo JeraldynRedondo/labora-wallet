@@ -6,8 +6,9 @@ import (
 
 // Wallet is a struct that represents the Wallet object that belongs to the items table.
 type Wallet struct {
-	ID            int       `json:"id"`
-	DNI           string    `json:"dni_request"`
-	Country       string    `json:"country_id"`
-	Order_request time.Time `json:"order_request"`
+	ID           int       `json:"id"`
+	DNI          string    `json:"dni_request"`
+	Country      string    `json:"country_id"`
+	Date_request time.Time `json:"order_request"`
+	Balance      int       `json:"balance"`
 }

@@ -16,7 +16,7 @@ func StartServer(router http.Handler) error {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	port := os.Getenv("portNumber")
+	port := os.Getenv("PORT_NUMBER")
 
 	servidor := &http.Server{
 		Handler:      router,
@@ -27,7 +27,9 @@ func StartServer(router http.Handler) error {
 
 	fmt.Printf("Starting Server on port %s...\n", port)
 	if err := servidor.ListenAndServe(); err != nil {
+
 		return fmt.Errorf("Error while starting up Server: '%v'", err)
 	}
+
 	return nil
 }
