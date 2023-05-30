@@ -12,29 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"my-labora-wallet-project/model"
+
 	"github.com/joho/godotenv"
 )
-
-type TruoraPostResponse struct {
-	Check struct {
-		CheckID string `json:"check_id"`
-	} `json:"check"`
-}
-
-type TruoraGetResponse struct {
-	Check struct {
-		CheckID        string `json:"check_id"`
-		CompanySummary struct {
-			CompanyStatus string `json:"company_status"`
-			Result        string `json:"result"`
-		} `json:"company_summary"`
-		Country      string    `json:"country"`
-		CreationDate time.Time `json:"creation_date"`
-		NameScore    int       `json:"name_score"`
-		IDScore      int       `json:"id_score"`
-		Score        int       `json:"score"`
-	}
-}
 
 const (
 	BaseUrl     = "https://api.checks.truora.com/v1/checks"
@@ -76,19 +57,18 @@ func request(method, url string, payload *strings.Reader) ([]byte, error) {
 func postTruoraAPIRequest(nationalID, country, entity_type string, userAuthorized bool) (string, error) {
 
 	//Getting the url with the request body
-	urlFull, data := getPostUrl(nationalID, country, entity_type, userAuthorized)
+	data := makePostBody(nationalID, country, entity_type, userAuthorized)
 	//Create the request input variables
-	urlStr := urlFull.String() // "https://api.checks.truora.com/v1/checks"
 	payload := strings.NewReader(data.Encode())
 	method := "POST"
 
-	body, err := request(method, urlStr, payload)
+	body, err := request(method, BaseUrl, payload)
 	if err != nil {
 
 		return "", fmt.Errorf("Error, failed to make POST request to API: %w", err)
 	}
 
-	var Response TruoraPostResponse
+	var Response model.TruoraPostResponse
 	err = json.Unmarshal(body, &Response)
 	if err != nil {
 
@@ -103,7 +83,7 @@ func postTruoraAPIRequest(nationalID, country, entity_type string, userAuthorize
 
 // getTruoraAPIRequest is a function that makes a GET request to Truora "Background Check" API and returns the person's score.
 func getTruoraAPIRequest(checkID string) (int, error) {
-	url := "https://api.checks.truora.com/v1/checks/" + checkID
+	url := BaseUrl + "/" + checkID
 	method := "GET"
 	payload := strings.NewReader("")
 
@@ -113,7 +93,7 @@ func getTruoraAPIRequest(checkID string) (int, error) {
 		return -1, fmt.Errorf("Error, failed to make GET request to API: %w", err)
 	}
 
-	var Response TruoraGetResponse
+	var Response model.TruoraGetResponse
 	err = json.Unmarshal(body, &Response)
 	if err != nil {
 
@@ -167,19 +147,13 @@ func getAPI_KEY() string {
 	return API_KEY
 }
 
-// getPostUrl is a function that returns the url of the post service with the related body data.
-func getPostUrl(nationalID, country, entity_type string, userAuthorized bool) (*url.URL, url.Values) {
-	apiUrl := "https://api.checks.truora.com"
-	resource := "/v1/checks"
+// makePostBody is a function that returns the url of the post service with the related body data.
+func makePostBody(nationalID, country, entity_type string, userAuthorized bool) url.Values {
 	data := url.Values{}
 	data.Set("national_id", nationalID)
 	data.Set("country", country)
 	data.Set("type", entity_type)
 	data.Set("user_authorized", strconv.FormatBool(userAuthorized))
 
-	// Create the url type variable
-	urlFull, _ := url.ParseRequestURI(apiUrl)
-	urlFull.Path = resource
-
-	return urlFull, data
+	return data
 }

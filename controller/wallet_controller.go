@@ -93,7 +93,6 @@ func (c *WalletController) UpdateWallet(response http.ResponseWriter, request *h
 
 // DeleteWallet is a function that delete an Wallet by id from a request.
 func (c *WalletController) DeleteWallet(response http.ResponseWriter, request *http.Request) {
-	var log model.Log
 	parameters := mux.Vars(request)
 	id, err := strconv.Atoi(parameters["id"])
 
@@ -104,7 +103,7 @@ func (c *WalletController) DeleteWallet(response http.ResponseWriter, request *h
 		return
 	}
 
-	err = c.WalletService.DeleteWallet(id, log)
+	err = c.WalletService.DeleteWallet(id)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusBadRequest)
 
@@ -211,7 +210,6 @@ func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
 // decisionToCreateWallet is a function that decides whether or not to create the wallet based on the API response.
 func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request) (int, model.Wallet, error) {
 	var wallet model.Wallet
-	var log model.Log
 
 	autorization, err := service.GetApproval(Body_request.National_id, Body_request.Country, Body_request.Entity_type, Body_request.UserAuthorized)
 	if err != nil {
@@ -221,14 +219,10 @@ func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request
 
 	wallet.DNI = Body_request.National_id
 	wallet.Country = Body_request.Country
-	wallet.Date_request = time.Now()
+	wallet.Created_date = time.Now()
 
 	if !autorization {
-		log.DNI = wallet.DNI
-		log.Country = wallet.Country
-		log.Status_request = "Denied"
-		log.Request_type = "CREATE WALLET"
-		err = c.WalletService.CreateLog(log)
+		err = c.WalletService.CreateLog(wallet.DNI, wallet.Country, "Denied", "CREATE WALLET")
 		if err != nil {
 
 			return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the log: %w", err)
@@ -237,12 +231,7 @@ func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request
 		return http.StatusConflict, model.Wallet{}, nil
 	}
 
-	log.DNI = wallet.DNI
-	log.Country = wallet.Country
-	log.Status_request = "Approved"
-	log.Request_type = "CREATE WALLET"
-
-	wallet, err = c.WalletService.CreateWallet(wallet, log)
+	wallet, err = c.WalletService.CreateWallet(wallet)
 	if err != nil {
 
 		return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the wallet %w", err)

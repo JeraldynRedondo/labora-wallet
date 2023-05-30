@@ -7,9 +7,9 @@ type WalletService struct {
 }
 
 // CreateWallet implements the function CreateWallet of the database in a DBHandler.
-func (s *WalletService) CreateWallet(wallet model.Wallet, log model.Log) (model.Wallet, error) {
+func (s *WalletService) CreateWallet(wallet model.Wallet) (model.Wallet, error) {
 
-	return s.DbHandler.CreateWallet(wallet, log)
+	return s.DbHandler.CreateWallet(wallet)
 }
 
 // UpdateWallet implements the function UpdateWallet of the database in a DBHandler.
@@ -19,9 +19,9 @@ func (s *WalletService) UpdateWallet(id int, wallet model.Wallet) (model.Wallet,
 }
 
 // DeleteWallet implements the function DeleteWallet of the database in a DBHandler.
-func (s *WalletService) DeleteWallet(id int, log model.Log) error {
+func (s *WalletService) DeleteWallet(id int) error {
 
-	return s.DbHandler.DeleteWallet(id, log)
+	return s.DbHandler.DeleteWallet(id)
 }
 
 // WalletStatus implements the function WalletStatus of the database in a DBHandler.
