@@ -48,7 +48,7 @@ func (s *WalletService) GetWalletById(id int) (model.WalletIdResponse, error) {
 }
 
 // CreateMovement implements the function CreateMovement of the database in a DBHandler.
-func (s *WalletService) CreateMovement(trans model.Transaction_Request) error {
+func (s *WalletService) CreateMovement(trans model.Transaction_Request) (string, error) {
 
 	return s.DbHandler.CreateMovement(trans)
 }

@@ -252,16 +252,17 @@ func (c *WalletController) CreateMovement(response http.ResponseWriter, request 
 		return
 	}
 
-	err = c.WalletService.CreateMovement(Body_request)
+	message, err := c.WalletService.CreateMovement(Body_request)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
+	message += " transaction"
 
 	// Create a map containing the list of wallets and the pagination information
 	responseData := map[string]interface{}{
-		"message": "Succesful transactionwallets",
+		"message": message,
 	}
 
 	// Encode the response map in JSON format and send in the HTTP response
