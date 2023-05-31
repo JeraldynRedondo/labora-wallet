@@ -13,6 +13,13 @@ type Wallet struct {
 	Balance      int       `json:"balance"`
 }
 
+// Wallet is a struct that represents the Wallet object that belongs to the items table.
+type Transaction_Request struct {
+	SenderID   int `json:"sender_id"`
+	ReceiverID int `json:"receiver_id"`
+	Amount     int `json:"amount"`
+}
+
 // Movement is a struct that represents the movement in a Wallet object.
 type Movement struct {
 	ID               int       `json:"id"`

@@ -114,10 +114,10 @@ func (c *WalletController) DeleteWallet(response http.ResponseWriter, request *h
 }
 
 // WalletStatus is a function that returns a number of wallets per page from a request.
-func (c *WalletController) WalletStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	pageUser := r.URL.Query().Get("page")
-	walletsUser := r.URL.Query().Get("walletsPerPage")
+func (c *WalletController) WalletStatus(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+	pageUser := request.URL.Query().Get("page")
+	walletsUser := request.URL.Query().Get("walletsPerPage")
 
 	page, err := strconv.Atoi(pageUser)
 	if err != nil || page < 1 {
@@ -131,7 +131,7 @@ func (c *WalletController) WalletStatus(w http.ResponseWriter, r *http.Request) 
 	// Get the paginated list of wallets
 	wallets, count, err := c.WalletService.WalletStatus(page, walletsPerPage)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(response, err.Error(), http.StatusBadRequest)
 
 		return
 	}
@@ -153,18 +153,18 @@ func (c *WalletController) WalletStatus(w http.ResponseWriter, r *http.Request) 
 	// Encode the response map in JSON format and send in the HTTP response
 	jsonData, err := json.Marshal(responseData)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(response, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
-	w.Write(jsonData)
+	response.Write(jsonData)
 }
 
 // GetLogs is a function that returns a number of logs per page from a request.
-func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	pageUser := r.URL.Query().Get("page")
-	walletsUser := r.URL.Query().Get("walletsPerPage")
+func (c *WalletController) GetLogs(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+	pageUser := request.URL.Query().Get("page")
+	walletsUser := request.URL.Query().Get("walletsPerPage")
 
 	page, err := strconv.Atoi(pageUser)
 	if err != nil || page < 1 {
@@ -178,7 +178,7 @@ func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
 	// Get the paginated list of logs
 	wallets, count, err := c.WalletService.GetLogs(page, walletsPerPage)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(response, err.Error(), http.StatusBadRequest)
 
 		return
 	}
@@ -200,11 +200,11 @@ func (c *WalletController) GetLogs(w http.ResponseWriter, r *http.Request) {
 	// Encode the response map in JSON format and send in the HTTP response
 	jsonData, err := json.Marshal(responseData)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(response, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
-	w.Write(jsonData)
+	response.Write(jsonData)
 }
 
 // decisionToCreateWallet is a function that decides whether or not to create the wallet based on the API response.
@@ -238,4 +238,47 @@ func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request
 	}
 
 	return http.StatusOK, wallet, nil
+}
+
+// CreateWallet is a function that creates an Wallet from a request.
+func (c *WalletController) CreateMovement(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+	var Body_request model.API_Request
+
+	err := json.NewDecoder(request.Body).Decode(&Body_request)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	status, wallet, err := c.decisionToCreateWallet(Body_request)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	ResponseJson(response, status, wallet)
+}
+
+// GetLogs is a function that returns a number of logs per page from a request.
+func (c *WalletController) GetWalletById(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	var wallet model.WalletIdResponse
+	parameters := mux.Vars(request)
+	id, err := strconv.Atoi(parameters["id"])
+	if err != nil {
+		response.WriteHeader(http.StatusBadRequest)
+		response.Write([]byte("ID must be a number"))
+		return
+	}
+
+	wallet, err = c.WalletService.GetWalletById(id)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+	}
+
+	ResponseJson(response, http.StatusOK, wallet)
 }

@@ -31,13 +31,24 @@ func (s *WalletService) WalletStatus(pages, walletsPerPage int) ([]model.Wallet,
 }
 
 // CreateLog implements the function CreateLog of the database in a DBHandler.
-func (s *WalletService) CreateLog(log model.Log) error {
-
-	return s.DbHandler.CreateLog(log)
+func (s *WalletService) CreateLog(DNI, Country, status_request, request_type string) error {
+	return s.DbHandler.CreateLog(DNI, Country, status_request, request_type)
 }
 
 // GetLogs implements the function GetLogs of the database in a DBHandler.
 func (s *WalletService) GetLogs(pages, logsPerPage int) ([]model.Log, int, error) {
 
 	return s.DbHandler.GetLogs(pages, logsPerPage)
+}
+
+// GetWalletById implements the function GetWalletById of the database in a DBHandler.
+func (s *WalletService) GetWalletById(id int) (model.WalletIdResponse, error) {
+
+	return s.DbHandler.GetWalletById(id)
+}
+
+// CreateMovement implements the function CreateMovement of the database in a DBHandler.
+func (s *WalletService) CreateMovement(trans model.Transaction_Request) error {
+
+	return s.DbHandler.CreateMovement(trans)
 }
