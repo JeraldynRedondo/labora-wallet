@@ -243,7 +243,7 @@ func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request
 // CreateWallet is a function that creates an Wallet from a request.
 func (c *WalletController) CreateMovement(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
-	var Body_request model.API_Request
+	var Body_request model.Transaction_Request
 
 	err := json.NewDecoder(request.Body).Decode(&Body_request)
 	if err != nil {
@@ -252,14 +252,28 @@ func (c *WalletController) CreateMovement(response http.ResponseWriter, request 
 		return
 	}
 
-	status, wallet, err := c.decisionToCreateWallet(Body_request)
+	err = c.WalletService.CreateMovement(Body_request)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
-	ResponseJson(response, status, wallet)
+	// Create a map containing the list of wallets and the pagination information
+	responseData := map[string]interface{}{
+		"message": "Succesful transactionwallets",
+	}
+
+	// Encode the response map in JSON format and send in the HTTP response
+	jsonData, err := json.Marshal(responseData)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Write(jsonData)
 }
 
 // GetLogs is a function that returns a number of logs per page from a request.

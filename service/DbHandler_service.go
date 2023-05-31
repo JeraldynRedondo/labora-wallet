@@ -455,5 +455,15 @@ func (Db *PostgresDBHandler) GetLogs(pages, logsPerPage int) ([]model.Log, int, 
 
 // GetWallet is a function that queries a database for wallet id and returns the wallet with transactions.
 func (Db *PostgresDBHandler) GetWalletById(id int) (model.WalletIdResponse, error) {
-	return model.WalletIdResponse{}, nil
+	var wallet model.WalletIdResponse
+
+	//Get wallet.
+	query := "SELECT w.id, w.balance, t.transaction_type, t.amount, t.date_transaction FROM wallets w JOIN transactions t ON w.id = t.wallet_id WHERE w.id = $1"
+
+	err := Db.QueryRow(query, id).Scan(&wallet.ID, &wallet.Balance, &wallet.Movements.Transaction_type, &wallet.Movements.Amount, &wallet.Movements.Date_transaction)
+	if err != nil {
+		return model.WalletIdResponse{}, fmt.Errorf("Error querying database: %w", err)
+	}
+
+	return wallet, nil
 }
