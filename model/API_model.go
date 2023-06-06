@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+//API_Request is a structure that represents the body of the API request.
 type API_Request struct {
 	National_id    string `json:"national_id"`
 	Country        string `json:"country"`
@@ -9,12 +10,14 @@ type API_Request struct {
 	UserAuthorized bool   `json:"userAuthorized"`
 }
 
+// TruoraPostResponse is a structure that represents the response of the POST request to the Background Checks API.
 type TruoraPostResponse struct {
 	Check struct {
 		CheckID string `json:"check_id"`
 	} `json:"check"`
 }
 
+// TruoraGetResponse is a structure that represents the response of the GET request to the Background Checks API.
 type TruoraGetResponse struct {
 	Check struct {
 		CheckID        string `json:"check_id"`

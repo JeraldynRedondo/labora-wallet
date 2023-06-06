@@ -17,6 +17,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Singers that relate to Truora API requests
 const (
 	BaseUrl     = "https://api.checks.truora.com/v1/checks"
 	ContentType = "application/x-www-form-urlencoded"
@@ -106,6 +107,7 @@ func getTruoraAPIRequest(checkID string) (int, error) {
 	return score, nil
 }
 
+// truoraAPIRequest is a function that executes the two requests to the truora API to get the score.
 func truoraAPIRequest(national_id, country, entity_type string, userAuthorized bool) (int, error) {
 	checkID, err := postTruoraAPIRequest(national_id, country, entity_type, userAuthorized)
 	if err != nil {
@@ -124,6 +126,7 @@ func truoraAPIRequest(national_id, country, entity_type string, userAuthorized b
 	return score, nil
 }
 
+// GetApproval is a function that decides if the creation of the wallet is approved according to the score received.
 func GetApproval(national_id, country, entity_type string, userAuthorized bool) (bool, error) {
 	score, err := truoraAPIRequest(national_id, country, entity_type, userAuthorized)
 

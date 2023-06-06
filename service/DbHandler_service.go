@@ -454,12 +454,33 @@ func (Db *PostgresDBHandler) GetWalletById(id int) (model.WalletIdResponse, erro
 	var wallet model.WalletIdResponse
 
 	//Get wallet.
-	query := "SELECT w.id, w.balance, t.transaction_type, t.amount, t.date_transaction FROM wallets w JOIN transactions t ON w.id = t.wallet_id WHERE w.id = $1"
+	query := "SELECT id, balance FROM wallets WHERE id = $1"
 
-	err := Db.QueryRow(query, id).Scan(&wallet.ID, &wallet.Balance, &wallet.Movements.Transaction_type, &wallet.Movements.Amount, &wallet.Movements.Date_transaction)
+	err := Db.QueryRow(query, id).Scan(&wallet.ID, &wallet.Balance)
 	if err != nil {
 		return model.WalletIdResponse{}, fmt.Errorf("Error querying database: %w", err)
 	}
+
+	movements := make([]model.MovementById, 0)
+	query = "SELECT t.transaction_type, t.amount, t.date_transaction FROM wallets w JOIN transactions t ON w.id = t.wallet_id WHERE w.id = $1"
+	rows, err := Db.Query(query, id)
+	if err != nil {
+		return model.WalletIdResponse{}, fmt.Errorf("Error querying database: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var movement model.MovementById
+		err := rows.Scan(&movement.Transaction_type, &movement.Amount, &movement.Date_transaction)
+		if err != nil {
+			fmt.Printf("Error extracting transaction: %v", err)
+			continue
+		}
+		movements = append(movements, movement)
+	}
+
+	wallet.Movements = movements
 
 	return wallet, nil
 }

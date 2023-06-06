@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Wallet is a struct that represents the Wallet object that belongs to the items table.
+// Wallet is a struct that represents the Wallet object that belongs to the wallets table.
 type Wallet struct {
 	ID           int       `json:"id"`
 	DNI          string    `json:"dni_request"`
@@ -13,7 +13,7 @@ type Wallet struct {
 	Balance      int       `json:"balance"`
 }
 
-// Wallet is a struct that represents the Wallet object that belongs to the items table.
+// Transaction_Request is a structure that represents the request body in a transaction.
 type Transaction_Request struct {
 	SenderID   int `json:"sender_id"`
 	ReceiverID int `json:"receiver_id"`
@@ -31,13 +31,16 @@ type Movement struct {
 
 // WalletIdResponse is a structure that represents the query response by Id of a wallet and has attributes of a wallet type object and a transaction type object.
 type WalletIdResponse struct {
-	ID        int `json:"id"`
-	Balance   int `json:"balance"`
-	Movements struct {
-		Transaction_type string    `json:"transaction_type"`
-		Amount           int       `json:"amount"`
-		Date_transaction time.Time `json:"date_transaction"`
-	} `json:"movements"`
+	ID        int            `json:"id"`
+	Balance   int            `json:"balance"`
+	Movements []MovementById `json:"movements"`
+}
+
+// MovementById is a struct that represents the movement in a Wallet object when searching by id.
+type MovementById struct {
+	Transaction_type string    `json:"transaction_type"`
+	Amount           int       `json:"amount"`
+	Date_transaction time.Time `json:"date_transaction"`
 }
 
 // Deposit is a method that increases the wallet balance by the given amount
