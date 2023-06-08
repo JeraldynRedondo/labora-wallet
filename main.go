@@ -32,7 +32,7 @@ func main() {
 	// Configure CORS middleware
 	corsOptions := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
-		handlers.AllowedMethods([]string{"GET", "POST"}),
+		handlers.AllowedMethods([]string{"*"}),
 	)
 
 	// Add CORS middleware to all routes
