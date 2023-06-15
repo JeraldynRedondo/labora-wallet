@@ -16,6 +16,8 @@ const (
 	Failed    = "Failed"
 	Deposit   = "Deposit"
 	Withdraw  = "Withdraw"
+	create    = "CREATE WALLET"
+	delete    = "DELETE WALLET"
 )
 
 func (Db *PostgresDBHandler) CreateWalletInTx(wallet model.Wallet, tx *sql.Tx) (model.Wallet, error) {
@@ -25,8 +27,7 @@ func (Db *PostgresDBHandler) CreateWalletInTx(wallet model.Wallet, tx *sql.Tx) (
 		return model.Wallet{}, fmt.Errorf("Error: %w", err)
 	}
 
-	query := `INSERT INTO wallets (dni_request, country_id, created_date,balance)
-	VALUES ($1, $2, $3, $4) RETURNING *`
+	query := InsertWalletInTx
 	row := tx.QueryRow(query, &wallet.DNI, &wallet.Country, time.Now(), 100)
 
 	err := row.Scan(&wallet.ID, &wallet.DNI, &wallet.Country, &wallet.CreatedDate, &wallet.Balance)
@@ -55,7 +56,7 @@ func (Db *PostgresDBHandler) CreateWallet(wallet model.Wallet) (model.Wallet, er
 		return model.Wallet{}, fmt.Errorf("Error trying to create the wallet in the transaction: %w", err)
 	}
 
-	err = Db.CreateLogInTx(wallet.DNI, wallet.Country, Approved, "CREATE WALLET", tx)
+	err = Db.CreateLogInTx(wallet.DNI, wallet.Country, Approved, create, tx)
 	if err != nil {
 		tx.Rollback()
 
@@ -109,14 +110,14 @@ func (Db *PostgresDBHandler) DeleteWallet(id int) error {
 		return fmt.Errorf("Error trying to search the wallet in the transaction: %w", err)
 	}
 
-	DNI, Country, status_request, request_type, err := Db.DeleteWalletInTx(wallet, tx)
+	dataLog, err := Db.DeleteWalletInTx(wallet, tx)
 	if err != nil {
 		tx.Rollback()
 
 		return fmt.Errorf("Error trying to delete the wallet in the transaction: %w", err)
 	}
 
-	err = Db.CreateLogInTx(DNI, Country, status_request, request_type, tx)
+	err = Db.CreateLogInTx(dataLog.DNI, dataLog.Country, dataLog.StatusRequest, dataLog.StatusRequest, tx)
 	if err != nil {
 		tx.Rollback()
 
@@ -135,27 +136,29 @@ func (Db *PostgresDBHandler) DeleteWallet(id int) error {
 }
 
 // DeleteWalletInTx it is a function that updates a wallet by id during a transaction.
-func (Db *PostgresDBHandler) DeleteWalletInTx(wallet model.Wallet, tx *sql.Tx) (string, string, string, string, error) {
-	query := "DELETE FROM wallets WHERE id = $1"
+func (Db *PostgresDBHandler) DeleteWalletInTx(wallet model.Wallet, tx *sql.Tx) (model.DeleteWalletLog, error) {
+	var dataLog model.DeleteWalletLog
+
+	query := DeleteWalletByID
 
 	_, err := tx.Exec(query, wallet.ID)
 	if err != nil {
 		tx.Rollback()
-		return "", "", "", "", fmt.Errorf("error executing delete query: %w", err)
+		return model.DeleteWalletLog{}, fmt.Errorf("error executing delete query: %w", err)
 	}
 
-	DNI := wallet.DNI
-	Country := wallet.Country
-	status_request := Deleted
-	request_type := "DELETE WALLET"
+	dataLog.DNI = wallet.DNI
+	dataLog.Country = wallet.Country
+	dataLog.StatusRequest = Deleted
+	dataLog.RequestType = delete
 
-	return DNI, Country, status_request, request_type, nil
+	return dataLog, nil
 }
 
-// DeleteWalletInTx it is a function that updates a wallet by id during a transaction.
+// searchWalletByIdInTx it is a function that updates a wallet by id during a transaction.
 func (Db *PostgresDBHandler) searchWalletByIdInTx(id int, tx *sql.Tx) (model.Wallet, error) {
 	var wallet model.Wallet
-	query := "SELECT * FROM wallets WHERE id=$1"
+	query := GetWalletByID
 
 	err := tx.QueryRow(query, id).Scan(&wallet.ID, &wallet.DNI, &wallet.Country, &wallet.CreatedDate, &wallet.Balance)
 	_, err = tx.Exec(query, id)
@@ -175,7 +178,7 @@ func (Db *PostgresDBHandler) WalletStatus(pages, walletsPerPage int) ([]model.Wa
 
 	//Get the total number of rows in the wallets table
 	var count int
-	query := "SELECT COUNT(*) FROM wallets"
+	query := GetTotalWalletCount
 	err := Db.QueryRow(query).Scan(&count)
 	if err != nil {
 
@@ -183,7 +186,7 @@ func (Db *PostgresDBHandler) WalletStatus(pages, walletsPerPage int) ([]model.Wa
 	}
 
 	// Get the list of elements corresponding to the current page
-	query = "SELECT * FROM wallets ORDER BY id OFFSET $1 LIMIT $2"
+	query = GetWalletsByPage
 	rows, err := Db.Query(query, start, walletsPerPage)
 	if err != nil {
 
@@ -222,8 +225,7 @@ func (Db *PostgresDBHandler) CreateLog(DNI, Country, status_request, request_typ
 	}
 
 	// Insert the new log in the database
-	query := `INSERT INTO logs (dni_request,country_id, status_request, date_request,request_type)
-                        VALUES ($1, $2, $3, $4, $5) RETURNING *`
+	query := InsertLogEntry
 	row := Db.QueryRow(query, DNI, Country, status_request, time.Now(), request_type)
 
 	err := row.Scan(&logM.ID, &logM.DNI, &logM.Country, &logM.StatusRequest, &logM.DateRequest, &logM.RequestType)
@@ -244,8 +246,7 @@ func (Db *PostgresDBHandler) CreateLogInTx(DNI, Country, status_request, request
 	}
 
 	// Insert the new log in the database
-	query := `INSERT INTO logs (dni_request,country_id, status_request, date_request,request_type)
-                        VALUES ($1, $2, $3, $4, $5) RETURNING *`
+	query := InsertLogEntry
 	row := tx.QueryRow(query, DNI, Country, status_request, time.Now(), request_type)
 
 	err := row.Scan(&logM.ID, &logM.DNI, &logM.Country, &logM.StatusRequest, &logM.DateRequest, &logM.RequestType)
@@ -366,7 +367,7 @@ func (Db *PostgresDBHandler) validateBalanceInTx(id int, amount uint, tx *sql.Tx
 	var balance uint
 	//Validation
 	mutex.Lock()
-	query := `SELECT balance FROM wallets WHERE id = $1`
+	query := GetWalletBalanceByID
 	err := tx.QueryRow(query, id).Scan(&balance)
 	if err != nil {
 
@@ -389,7 +390,7 @@ func (db *PostgresDBHandler) processTransaction(wallet *model.Wallet, transactio
 	case Deposit:
 		wallet.Deposit(amount)
 
-		query := `UPDATE wallets SET balance = $1 WHERE id = $2`
+		query := UpdateBalanceValueInDeposit
 
 		_, err := tx.Exec(query, wallet.Balance, wallet.ID)
 		if err != nil {
@@ -400,7 +401,7 @@ func (db *PostgresDBHandler) processTransaction(wallet *model.Wallet, transactio
 	case Withdraw:
 		wallet.Withdraw(amount)
 
-		query := `UPDATE wallets SET balance = $1 WHERE id = $2`
+		query := UpdateBalanceValueInWithdrawal
 
 		_, err := tx.Exec(query, wallet.Balance, wallet.ID)
 		if err != nil {
@@ -423,8 +424,7 @@ func (Db *PostgresDBHandler) CreateTransactionInTx(wallet_id int, amount uint, t
 	}
 
 	// Insert the new log in the database
-	query := `INSERT INTO transactions (wallet_id,transaction_type,amount,date_transaction)
-                        VALUES ($1, $2, $3, $4) RETURNING *`
+	query := InsertTransaction
 	row := tx.QueryRow(query, wallet_id, transaction_type, amount, time.Now())
 
 	err := row.Scan(&movement.ID, &movement.WalletId, &movement.TransactionType, &movement.Amount, &movement.DateTransaction)
@@ -442,7 +442,7 @@ func (Db *PostgresDBHandler) GetLogs(pages, logsPerPage int) ([]model.Log, int, 
 
 	//Get the total number of rows in the log table
 	var count int
-	query := "SELECT COUNT(*) FROM logs"
+	query := GetTotalLogCount
 	err := Db.QueryRow(query).Scan(&count)
 	if err != nil {
 
@@ -450,7 +450,7 @@ func (Db *PostgresDBHandler) GetLogs(pages, logsPerPage int) ([]model.Log, int, 
 	}
 
 	// Get the list of elements corresponding to the current page
-	query = "SELECT * FROM logs ORDER BY id OFFSET $1 LIMIT $2"
+	query = GetLogsByPage
 	rows, err := Db.Query(query, start, logsPerPage)
 	if err != nil {
 
@@ -483,8 +483,7 @@ func (Db *PostgresDBHandler) GetLogs(pages, logsPerPage int) ([]model.Log, int, 
 func (Db *PostgresDBHandler) GetWalletById(id int) (model.WalletIdResponse, error) {
 	var wallet model.WalletIdResponse
 
-	//Get wallet.
-	query := "SELECT id, balance FROM wallets WHERE id = $1"
+	query := GetInfoWalletById
 
 	err := Db.QueryRow(query, id).Scan(&wallet.ID, &wallet.Balance)
 	if err != nil {
@@ -492,7 +491,7 @@ func (Db *PostgresDBHandler) GetWalletById(id int) (model.WalletIdResponse, erro
 	}
 
 	movements := make([]model.MovementById, 0)
-	query = "SELECT t.transaction_type, t.amount, t.date_transaction FROM wallets w JOIN transactions t ON w.id = t.wallet_id WHERE w.id = $1"
+	query = GetInfoTransWalletById
 	rows, err := Db.Query(query, id)
 	if err != nil {
 		return model.WalletIdResponse{}, fmt.Errorf("Error querying database: %w", err)

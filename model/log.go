@@ -11,3 +11,11 @@ type Log struct {
 	DateRequest   time.Time `json:"date_request"`
 	RequestType   string    `json:"request_type"`
 }
+
+//Log is a structure that represents the changes in the wallets that are recorded in the Logs table.
+type DeleteWalletLog struct {
+	DNI           string `json:"dni_request"`
+	Country       string `json:"country_id"`
+	StatusRequest string `json:"status_request"`
+	RequestType   string `json:"request_type"`
+}
