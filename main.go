@@ -11,23 +11,23 @@ import (
 )
 
 func main() {
-
 	var dbHandler, error = service.Connect_DB()
 	if error != nil {
 		log.Fatal(error)
 	}
+
 	walletService := &service.WalletService{DbHandler: dbHandler}
 	controller := &controller.WalletController{WalletService: *walletService}
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/CreateWallet", controller.CreateWallet).Methods("POST")
-	router.HandleFunc("/UpdateWallet/{id}", controller.UpdateWallet).Methods("PUT")
-	router.HandleFunc("/DeleteWallet/{id}", controller.DeleteWallet).Methods("DELETE")
-	router.HandleFunc("/WalletStatus", controller.WalletStatus).Methods("GET")
-	router.HandleFunc("/wallet/{id}", controller.GetWalletById).Methods("GET")
-	router.HandleFunc("/GetLogs", controller.GetLogs).Methods("GET")
-	router.HandleFunc("/transaction", controller.CreateMovement).Methods("POST")
+	router.HandleFunc("/v1/wallets", controller.CreateWallet).Methods("POST")
+	router.HandleFunc("/v1/wallets/{id}", controller.UpdateWallet).Methods("PUT")
+	router.HandleFunc("/v1/wallets/{id}", controller.DeleteWallet).Methods("DELETE")
+	router.HandleFunc("/v1/wallets", controller.WalletStatus).Methods("GET")
+	router.HandleFunc("/v1/wallets/{id}", controller.GetWalletById).Methods("GET")
+	router.HandleFunc("/v1/logs", controller.GetLogs).Methods("GET")
+	router.HandleFunc("/v1/wallets/transaction", controller.CreateMovement).Methods("POST")
 
 	// Configure CORS middleware
 	corsOptions := handlers.CORS(

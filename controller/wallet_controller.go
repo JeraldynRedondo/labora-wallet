@@ -13,6 +13,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	Denied = "Denied"
+)
+
 type WalletController struct {
 	WalletService service.WalletService
 }
@@ -25,11 +29,12 @@ func ResponseJson(response http.ResponseWriter, status int, data interface{}) er
 
 		return fmt.Errorf("error while marshalling object %v, trace: %+v", data, err)
 	}
+
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(status)
+
 	_, err = response.Write(bytes)
 	if err != nil {
-
 		return fmt.Errorf("error while writing bytes to response writer: %+v", err)
 	}
 
@@ -47,7 +52,7 @@ func (c *WalletController) CreateWallet(response http.ResponseWriter, request *h
 
 		return
 	}
-
+	fmt.Println(Body_request)
 	status, wallet, err := c.decisionToCreateWallet(Body_request)
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -94,8 +99,8 @@ func (c *WalletController) UpdateWallet(response http.ResponseWriter, request *h
 // DeleteWallet is a function that delete an Wallet by id from a request.
 func (c *WalletController) DeleteWallet(response http.ResponseWriter, request *http.Request) {
 	parameters := mux.Vars(request)
-	id, err := strconv.Atoi(parameters["id"])
 
+	id, err := strconv.Atoi(parameters["id"])
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		response.Write([]byte("ID must be a number"))
@@ -137,7 +142,7 @@ func (c *WalletController) WalletStatus(response http.ResponseWriter, request *h
 	}
 
 	totalPages := int(math.Ceil(float64(count) / float64(walletsPerPage)))
-
+	//*FUNCION APARTE*
 	// Create a map containing information about pagination
 	paginationInfo := map[string]interface{}{
 		"totalPages":  totalPages,
@@ -157,6 +162,7 @@ func (c *WalletController) WalletStatus(response http.ResponseWriter, request *h
 
 		return
 	}
+
 	response.Write(jsonData)
 }
 
@@ -211,20 +217,18 @@ func (c *WalletController) GetLogs(response http.ResponseWriter, request *http.R
 func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request) (int, model.Wallet, error) {
 	var wallet model.Wallet
 
-	autorization, err := service.GetApproval(Body_request.National_id, Body_request.Country, Body_request.Entity_type, Body_request.UserAuthorized)
+	autorization, err := service.GetApproval(Body_request.NationalId, Body_request.Country, Body_request.EntityType, Body_request.UserAuthorized)
 	if err != nil {
-
 		return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("API request failed %w", err)
 	}
 
-	wallet.DNI = Body_request.National_id
+	wallet.DNI = Body_request.NationalId
 	wallet.Country = Body_request.Country
-	wallet.Created_date = time.Now()
+	wallet.CreatedDate = time.Now()
 
 	if !autorization {
-		err = c.WalletService.CreateLog(wallet.DNI, wallet.Country, "Denied", "CREATE WALLET")
+		err = c.WalletService.CreateLog(wallet.DNI, wallet.Country, Denied, "CREATE WALLET")
 		if err != nil {
-
 			return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the log: %w", err)
 		}
 
@@ -233,7 +237,6 @@ func (c *WalletController) decisionToCreateWallet(Body_request model.API_Request
 
 	wallet, err = c.WalletService.CreateWallet(wallet)
 	if err != nil {
-
 		return http.StatusInternalServerError, model.Wallet{}, fmt.Errorf("Error creating the wallet %w", err)
 	}
 
